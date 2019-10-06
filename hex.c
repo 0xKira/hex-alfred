@@ -135,7 +135,7 @@ const char *ASCII[] = {
 int main(int argc, char **argv) {
     int skip, i, j;
     int is_str, has_ws, b8, b10, b16;
-    long long n;
+    long long n, tmp_n;
 
     printf("<items>\n");
 
@@ -213,47 +213,28 @@ int main(int argc, char **argv) {
         }
 
         errno = 0;
-        n = strtoll(argv[1], NULL, base);
+        tmp_n = n = strtoll(argv[1], NULL, base);
         if (errno != 0) {
             goto efail;
         }
-        if (n < 0) {
+        if (tmp_n < 0) {
             goto nfail;
         }
-        for (i = 63; i >= 0 && n > 0; i--) {
-            x8[i] = n & 0xff;
-            n = n >> 8;
-        }
-    }
-
-    for (i = 0; i < 63;) {
-        x16[i / 2] = x8[i] << 8 | x8[i + 1];
-        i += 2;
-    }
-    for (i = 0; i < 63;) {
-        x32[i / 4] = x8[i] << 24 | x8[i | 1] << 16 | x8[i | 2] << 8 | x8[i | 3];
-        i += 4;
-    }
-    skip = 4; /* right skip */
-    for (i = 63, j = 63; i >= 1 && j >= 0;) {
-        switch (skip) {
-        case 4: /* 0000 1111 1111 1111 */
-            x12[j] = x8[i--];
-            x12[j] |= (x8[i] & 0x0f) << 8;
-            j--;
-            skip = 8;
-            break;
-
-        case 8: /* 1111 1111 1111 xxxx */
-            x12[j] = (x8[i--] & 0xf0) >> 4;
-            x12[j] |= x8[i--] << 4;
-            j--;
-            skip = 4;
-            break;
+        for (i = 63; i >= 0 && tmp_n > 0; i--) {
+            x8[i] = tmp_n & 0xff;
+            tmp_n = tmp_n >> 8;
         }
     }
 
 #define ATTRS " valid=\"yes\" auto=\"\""
+
+    // print original number in decimal
+    printf("<item uuid=\"dec\"" ATTRS "><arg>");
+    printf("%lld", n);
+    printf("</arg><title>");
+    printf("%lld", n);
+    printf("</title><subtitle>decimal</subtitle></item>\n");
+
     printf("<item uuid=\"hex\"" ATTRS "><arg>");
     printx(8, "%02x");
     printf("</arg><title>");
@@ -261,9 +242,9 @@ int main(int argc, char **argv) {
     printf("</title><subtitle>hex</subtitle></item>\n");
 
     printf("<item uuid=\"oct\"" ATTRS "><arg>");
-    printx(12, "%04o");
+    printf("%llo", n);
     printf("</arg><title>");
-    printx(12, "%04o");
+    printf("%llo", n);
     printf("</title><subtitle>octal</subtitle></item>\n");
 
     printf("<item uuid=\"ascii\"" ATTRS "><arg>");
@@ -272,29 +253,17 @@ int main(int argc, char **argv) {
     printc(8);
     printf("</title><subtitle>ascii</subtitle></item>\n");
 
-    printf("<item uuid=\"named-ascii\"" ATTRS "><arg>");
-    printa(8);
-    printf("</arg><title>");
-    printa(8);
-    printf("</title><subtitle>ascii (named)</subtitle></item>\n");
+    // printf("<item uuid=\"named-ascii\"" ATTRS "><arg>");
+    // printa(8);
+    // printf("</arg><title>");
+    // printa(8);
+    // printf("</title><subtitle>ascii (named)</subtitle></item>\n");
 
     printf("<item uuid=\"dec8\"" ATTRS "><arg>");
     printx(8, "%d");
     printf("</arg><title>");
     printx(8, "%d");
     printf("</title><subtitle>decimal 8</subtitle></item>\n");
-
-    printf("<item uuid=\"dec16\"" ATTRS "><arg>");
-    printx(16, "%d");
-    printf("</arg><title>");
-    printx(16, "%d");
-    printf("</title><subtitle>decimal 16</subtitle></item>\n");
-
-    printf("<item uuid=\"dec32\"" ATTRS "><arg>");
-    printx(32, "%d");
-    printf("</arg><title>");
-    printx(32, "%d");
-    printf("</title><subtitle>decimal 32</subtitle></item>\n");
 
     printf("<item uuid=\"bin\"" ATTRS "><arg>");
     printb(8);
